@@ -17,6 +17,8 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -28,7 +30,11 @@ public class Handler implements Runnable { // 负责与单个客户通信的线�
 	private SocketAddress socketAddress;
 	private DatagramSocket dgSocket; // 客户端DatagramSocket
 
+	private String BASE_PATH = null;
 	private String CURRENT_PATH = null;
+	private List<String> CURRENT_FILE = new ArrayList<String>();
+	private List<String> CURRENT_DIR = new ArrayList<String>();
+	
 	private static final int BYTE_LEN = 8192; // 设置每次传输数据的长度
 
 	BufferedReader br;
@@ -39,6 +45,7 @@ public class Handler implements Runnable { // 负责与单个客户通信的线�
 	public Handler(Socket socket, DatagramSocket dgSocket, String BASE_PATH) throws SocketException {
 		this.socket = socket;
 		this.dgSocket = dgSocket;
+		this.BASE_PATH = BASE_PATH;
 		this.CURRENT_PATH = BASE_PATH;
 	}
 
@@ -66,12 +73,19 @@ public class Handler implements Runnable { // 负责与单个客户通信的线�
 					// 从本地抓取文件，发送给客户端
 					sendFile(fileName);
 				} else if (cmd[0].equals("ls")) {
-					listFiles();
+					ls();
 				} else if (cmd[0].equals("cd")) {
-					cdRespond();
+//					cdRespond();
+					if (cmd.length == 2) {
+						cd(cmd[1]);
+					} else {
+						pw.println("unknown cmd");
+						pw.println("end");
+					}
 				} else if (!cmd[0].equals("cd") && !cmd[0].equals("ls") && !cmd[0].equals("bye")
 						&& !cmd[0].equals("get")) {
 					pw.println("unknown cmd");
+					pw.println("end");
 				}
 			}
 		} catch (IOException e) {
@@ -86,37 +100,73 @@ public class Handler implements Runnable { // 负责与单个客户通信的线�
 			}
 		}
 	}
-
-	public void cdRespond() throws IOException {
-		String check = br.readLine();
-		String path = null;
-		if (check.equals("1_1")) {
-			System.out.println("已在根目录");
-//			pw.println("OK");
-			pw.println(CURRENT_PATH + " > " + "OK");
-			return;
-		} else if (check.equals("1_2")) {
-			path = br.readLine();
-			CURRENT_PATH = path;
-//			pw.println("OK");
-			pw.println(CURRENT_PATH + " > " + "OK");
-			System.out.println("回到父目录");
-			return;
-		} else if (check.equals("1_3")) {
-			path = br.readLine();
-			CURRENT_PATH = path;
-//			pw.println("OK");
-			pw.println(CURRENT_PATH + " > " + "OK");
-			System.out.println("转移到\t" + path);
-			return;
-		} else if (check.equals("1_4")) {
-			System.out.println("没有该目录");
-			pw.println("unknown dir");
+	
+	/*
+	 * 更新CURRENT_FILE
+	 */
+	public void updateCurrentFile() throws IOException {
+		File dir = new File(this.CURRENT_PATH);
+		if (!dir.exists() || !dir.isDirectory()) {
+			System.out.println("目录不存在，更新当前文件和目录出错");
 			return;
 		}
+		String[] files = dir.list();
+		for (int i = 0; i < files.length; i++) {
+			File file = new File(dir, files[i]);
+			if (file.isFile()) { // 该对象是file
+				CURRENT_FILE.add(file.getName());
+			} else { // 该对象是dir
+				CURRENT_DIR.add(file.getName());
+			}
+		}
+		System.out.println("更新当前文件和目录完毕");
+	}
+	
+	public void cd(String cmd) throws IOException {
+		String path = null;
+		if (cmd.equals("..")) {
+			if (CURRENT_PATH.equals(BASE_PATH)) {
+				pw.println(CURRENT_PATH + " > " + "OK");
+				pw.println("end");
+				System.out.println("已在根目录");
+				updateCurrentFile();
+				return;
+			} else {
+				File temp = new File(CURRENT_PATH);
+				path = temp.getParent();
+				CURRENT_PATH = path;
+				pw.println(CURRENT_PATH + " > " + "OK");
+				pw.println("end");
+				System.out.println("回到父目录");
+				updateCurrentFile();
+				return;
+			}
+		} else {
+			boolean checkDir = false;
+			// 检查要移动的目录是否存在
+			for (String s : CURRENT_DIR) {
+				if (s.equals(cmd))
+					checkDir = true;
+			}
+			if (checkDir) {
+				CURRENT_PATH = CURRENT_PATH + "\\" + cmd;
+				pw.println(CURRENT_PATH + " > " + "OK");
+				pw.println("end");
+				System.out.println("转移到\t" + path);
+				updateCurrentFile();
+				return;
+			} else {
+				pw.println("unknown dir");
+				pw.println("end");
+				System.out.println("没有该目录");
+				updateCurrentFile();
+				return;
+			}
+		}
+
 	}
 
-	public void listFiles() throws IOException {
+	public void ls() throws IOException {
 		System.out.println("开始发送目录...");
 		File dir = new File(this.CURRENT_PATH);
 		if (!dir.exists() || !dir.isDirectory()) {
@@ -175,10 +225,6 @@ public class Handler implements Runnable { // 负责与单个客户通信的线�
 		// 获取客户端信息
 		System.out.println(dp.getAddress() + "," + dp.getPort() + " : " + msg);
 		this.socketAddress = new InetSocketAddress(dp.getAddress(), dp.getPort()); // 指定UDP客户端地址
-
-		dp.setData(("you said:" + msg).getBytes());
-		dgSocket.send(dp); // 回复数据
-
 	}
 
 	public void sendFile(String fileName) {
