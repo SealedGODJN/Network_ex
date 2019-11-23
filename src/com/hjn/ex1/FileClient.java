@@ -27,14 +27,14 @@ import java.util.Scanner;
  *
  */
 public class FileClient {
-	private static final int UDP_PORT = 2020; // UDP服务器port
-	private String remoteIp = "127.0.0.1"; // UDP服务器IP
+	private static int UDP_PORT; // UDP服务器port
+	private static String remoteIp; // UDP服务器IP
 	private static final int BYTE_LEN = 8192; // 设置每次传输数据的长度
 
 //	private static final int PORT = 2021; // TCP连接端口
-	private static int PORT = 2021; // TCP连接端口
+	private static int PORT; // TCP连接端口
 //	private static final String HOST = "127.0.0.1"; // TCP连接地址
-	private static String HOST = "127.0.0.1"; // TCP连接地址
+	private static String HOST; // TCP连接地址
 //	private static String CLIENT_PATH = null; // 不能当做参数传入，服务器的地址应该对客户端保持隐藏
 //	private static String BASE_PATH = null; // 删除该属性，客户端不需要服务器端的路径
 //	private static String CURRENT_PATH = null; // 删除该属性，客户端不需要服务器端的路径
@@ -84,11 +84,13 @@ public class FileClient {
 		try {
 			if (args.length == 0) {
 				throw new IllegalArgumentException("输入数据为空");
-			} else if(args.length == 2) {
+			} else if(args.length == 4) {
 				HOST = args[0];
 				PORT = Integer.parseInt(args[1]);
-			} else if(args.length > 2) {
-				throw new IllegalArgumentException("输入参数多于2个，请调整参数个数");
+				remoteIp = args[2];
+				UDP_PORT = Integer.parseInt(args[3]);
+			} else if(args.length > 4) {
+				throw new IllegalArgumentException("输入参数多于4个，请调整参数个数");
 			}
 		} catch (IllegalArgumentException e) {
 			System.err.println(e.getMessage());

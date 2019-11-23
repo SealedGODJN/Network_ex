@@ -28,14 +28,16 @@ Network_ex_1是一个eclipse的java project，其功能是实现本地和服务�
 
    ```
    配置FileClient的Arguments为
-   服务器的IP地址 服务器的端口号
+   服务器TCP的IP地址 服务器TCP的端口号 服务器UDP的IP地址 服务器UDP的端口号
    
    比如：
-   服务器的IP地址为127.0.0.1
-   服务器的端口号为2021
+   服务器TCP的IP地址为127.0.0.1
+   服务器TCP的端口号为2021
+   服务器UDP的IP地址为127.0.0.1
+   服务器UDP的端口号为2021
    
    则我的FileServer的Arguments为
-   "127.0.0.1" "2021"
+   "127.0.0.1" "2021" "127.0.0.1" "2020"
    ```
 
 3. 分别运行FileServer.java和FileClient.java，开始使用本项目
