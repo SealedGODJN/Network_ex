@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Handler 处理客户端的请求，包括"cd"、"ls"、"get"、"quit"请求
  * @author HJN
  *
  */
@@ -32,8 +33,8 @@ public class Handler implements Runnable { // 负责与单个客户通信的线�
 
 	private String BASE_PATH = null;
 	private String CURRENT_PATH = null;
-	private List<String> CURRENT_FILE = new ArrayList<String>();
-	private List<String> CURRENT_DIR = new ArrayList<String>();
+	private List<String> CURRENT_FILE = new ArrayList<String>(); // 存储当前目录下的文件列表
+	private List<String> CURRENT_DIR = new ArrayList<String>(); // 存储当前目录下的文件夹列表
 	
 	private static final int BYTE_LEN = 8192; // 设置每次传输数据的长度
 
@@ -42,6 +43,13 @@ public class Handler implements Runnable { // 负责与单个客户通信的线�
 	PrintWriter pw;
 	InputStream is;
 
+	/**
+	 * Handler 构造函数，处理与一个客户端的连接
+	 * @param socket FileServer传过来的服务器TCPsocket
+	 * @param dgSocket FileServer传过来的服务器UDPsocket
+	 * @param BASE_PATH FileServer传过来的文件存储根目录
+	 * @throws SocketException
+	 */
 	public Handler(Socket socket, DatagramSocket dgSocket, String BASE_PATH) throws SocketException {
 		this.socket = socket;
 		this.dgSocket = dgSocket;
@@ -49,17 +57,26 @@ public class Handler implements Runnable { // 负责与单个客户通信的线�
 		this.CURRENT_PATH = BASE_PATH;
 	}
 
+	/**
+	 * initStream 初始化字符读入和写出流
+	 * @throws IOException
+	 */
 	public void initStream() throws IOException { // 初始化输入输出流对象方法
 		br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		bw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 		pw = new PrintWriter(bw, true);
-		pw.println(socket.getInetAddress() + ":" + socket.getPort() + ">" + "连接成功");
 	}
 
+	/**
+	 * run 自动调用该方法，处理客户端传来的请求
+	 */
 	public void run() { // 执行的内容
 		try {
 			System.out.println("新连接，连接地址：" + socket.getInetAddress() + "：" + socket.getPort()); // 客户端信息
 			initStream(); // 初始化输入输出流对象
+			
+			pw.println(socket.getInetAddress() + ":" + socket.getPort() + ">" + "连接成功"); // 给客户端传递“连接成功”的信息
+			
 			String info = null;
 			String[] cmd = null;
 			while (null != (info = br.readLine())) {
@@ -185,7 +202,12 @@ public class Handler implements Runnable { // 负责与单个客户通信的线�
 		pw.println("end");
 		System.out.println("发送目录成功");
 	}
-
+	
+	/**
+	 * formatFileSize 输入文件的大小，返回文件的格式化大小
+	 * @param file 文件的大小
+	 * @return 返回文件的格式化大小，带单位
+	 */
 	public static String formatFileSize(long file) {
 		DecimalFormat df = new DecimalFormat("#.00");
 		String fileSizeString = "";
@@ -200,7 +222,12 @@ public class Handler implements Runnable { // 负责与单个客户通信的线�
 		}
 		return fileSizeString;
 	}
-
+	
+	/**
+	 * getFolderSize 获取文件夹（包含其子文件）所占空间大小
+	 * @param file 要查询的文件对象
+	 * @return 返回文件夹（包含其子文件）所占空间大小
+	 */
 	public static long getFolderSize(File file) {
 		long size = 0;
 		try {
@@ -218,6 +245,10 @@ public class Handler implements Runnable { // 负责与单个客户通信的线�
 		return size;
 	}
 
+	/**
+	 * receiveInform 接收客户端UDP传来的信息，借此获取客户端UDP的端口号和地址
+	 * @throws IOException
+	 */
 	public void receiveInform() throws IOException {
 		DatagramPacket dp = new DatagramPacket(new byte[512], 512);
 		dgSocket.receive(dp); // 接收客户端信息
@@ -227,6 +258,10 @@ public class Handler implements Runnable { // 负责与单个客户通信的线�
 		this.socketAddress = new InetSocketAddress(dp.getAddress(), dp.getPort()); // 指定UDP客户端地址
 	}
 
+	/**
+	 * sendFile 服务器端通过UDP，发送文件给客户端
+	 * @param fileName 需要发送的文件名
+	 */
 	public void sendFile(String fileName) {
 		System.out.println("开始发送文件：" + fileName);
 		try {

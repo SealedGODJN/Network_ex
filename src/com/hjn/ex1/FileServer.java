@@ -11,6 +11,8 @@ import java.util.concurrent.Executors;
 import com.hjn.ex1.Handler;
 
 /**
+ * FileServer 服务器端，处理客户端的请求
+ * <p>FileServer 对请求的具体处理方法，参见Handler类<br>
  * @author HJN
  *
  */
@@ -24,6 +26,10 @@ public class FileServer {
 	ExecutorService executorService; // 线程池
 	final int POOL_SIZE = 4; // 单个处理器线程池工作线程数目
 
+	/**
+	 * FileServer 构造函数，初始化服务器TCPsocket、UDPsocket和线程池
+	 * @throws IOException
+	 */
 	public FileServer() throws IOException {
 		serverSocket = new ServerSocket(PORT); // 创建服务器端套接字
 
@@ -36,20 +42,29 @@ public class FileServer {
 		dgSocket = new DatagramSocket(UDP_PORT);
 	}
 
+	/**
+	 * main 主函数，运行FileServer.java则会第一个调用main函数
+	 * @param args 运行该java文件时附带的arugments
+	 * @throws IOException
+	 */
 	public static void main(String[] args) throws IOException {
 		/*
 		 * 实现：服务器端启动时需传递root目录参数，并校验该目录是否有效；
 		 */
 		try {
-			if (args.length == 0)
+			if (args.length == 0) {
 				throw new IllegalArgumentException("输入数据为空");
-			BASE_PATH = args[0];
+			} else if(args.length == 1) {
+				BASE_PATH = args[0];
+			} else if(args.length > 1) {
+				throw new IllegalArgumentException("输入参数多于1个，请调整参数个数");
+			}
 		} catch (IllegalArgumentException e) {
 			System.err.println(e.getMessage());
 		}
 
 		File check = new File(BASE_PATH);
-		if (check.exists()) {
+		if (check.isDirectory()) { // 判断是否是目录
 //			System.out.println("root目录有效");
 		} else {
 			System.out.println("root目录无效，请输入正确的root目录后，重启服务器");
@@ -60,7 +75,7 @@ public class FileServer {
 	}
 
 	/**
-	 * service implements
+	 * service 处理每个客户端的连接
 	 */
 	public void service() {
 

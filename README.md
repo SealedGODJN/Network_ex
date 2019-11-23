@@ -17,21 +17,25 @@ Network_ex_1是一个eclipse的java project，其功能是实现本地和服务�
    ```
    配置FileServer的Arguments为
    "你的Eclipse工作目录的路径\Network_ex\src"
+   
    比如：
    我的Eclipse工作目录的路径为
    "E:\software Design\Java_web_learning"
+   
    则我的FileServer的Arguments为
    "E:\software Design\Java_web_learning\Network_ex\src"
    ```
 
    ```
    配置FileClient的Arguments为
-   "你的Eclipse工作目录的路径\Network_ex\src\com\hjn\ex1" "你的Eclipse工作目录的路径\Network_ex_1\src"
+   服务器的IP地址 服务器的端口号
+   
    比如：
-   我的Eclipse工作目录的路径为
-   "E:\software Design\Java_web_learning"
+   服务器的IP地址为127.0.0.1
+   服务器的端口号为2021
+   
    则我的FileServer的Arguments为
-   "E:\software Design\Java_web_learning\Network_ex\src\com\hjn\ex1"
+   "127.0.0.1" "2021"
    ```
 
 3. 分别运行FileServer.java和FileClient.java，开始使用本项目
